@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.UIElements;
 using static UnityEngine.GraphicsBuffer;
 
 public class PlayerController : MonoBehaviour
@@ -11,12 +12,22 @@ public class PlayerController : MonoBehaviour
     private float initialY; // 초기 y 위치를 저장할 변수입니다.
     private Rigidbody playerRigidbody;
 
-    public Color rayColor = Color.red; // 레이의 색상
-    public float rayLength = 5.1f; // 레이의 길이
+    private ContactPoint con;
+    private bool flag = false;
+    private bool StartFlag = false;
+    private bool ComeBackFlag = false;
+    private bool EnterFlag = false;
+
+    public float speed =1f;
 
     Vector3 contactNormal;
     Vector3 perpendicularToXZPlane;
     Vector3 force;
+    private int count = 0;
+
+    private Vector3 minPos;
+    private Vector3 initPos;
+    private double min = 10000;
 
     private void Start()
     {
@@ -26,25 +37,21 @@ public class PlayerController : MonoBehaviour
 
     }
 
-    private void Update()
+    private void FixedUpdate()
     {
         if (isMoving)
         {
             if (goal != null)
             {
                 // Goal 객체 방향을 향해 회전합니다.
-                Vector3 direction = goal.position - transform.position;
-                direction.y = 0f; // y 방향 이동을 제한합니다.
+                Vector3 direction = (goal.position - transform.position).normalized * 1.5f * speed;
                 Quaternion rotation = Quaternion.LookRotation(direction);
                 transform.rotation = rotation;
-
-                // Goal 객체 방향으로 이동합니다.
-                transform.Translate(Vector3.forward * moveSpeed * Time.deltaTime);
 
                 // y 위치를 초기값으로 유지합니다.
                 Vector3 newPosition = transform.position;
                 newPosition.y = initialY;
-                transform.position = newPosition;
+                playerRigidbody.velocity = new Vector3(direction.x, 0, direction.z);
             }
             else
             {
@@ -53,41 +60,88 @@ public class PlayerController : MonoBehaviour
         }
         else
         {
-            Vector3 rayOrigin = transform.position + new Vector3(-0.5f,0f,0f);
-            Vector3 rayDirection = transform.forward;
 
-            RaycastHit hit;
-            if (Physics.Raycast(rayOrigin, rayDirection, out hit, rayLength))
+            if (EnterFlag)
             {
-                // 레이가 어떤 물체에 부딪혔다면, 부딪힌 지점에서 레이를 그립니다.
-                //Debug.DrawRay(rayOrigin, rayDirection * hit.distance, rayColor);
-                //if (hit.distance > 1.1f)
-                //{
-                //    playerRigidbody.velocity = new Vector3(transform.rotation.x, 0f, transform.rotation.z).normalized * 2f;
-                //    Debug.Log("test");
-                //}
-            }
-            else
-            {
-                //Debug.Log("a");
-                ////playerRigidbody.velocity = Vector3.zero;
-                //// 레이가 아무것도 부딪히지 않았다면, 원하는 길이만큼 레이를 그립니다.
-                //Debug.DrawRay(rayOrigin, rayDirection * rayLength, rayColor);
-                //playerRigidbody.velocity =new Vector3(transform.rotation.x,0f, transform.rotation.z).normalized * 2f;
+                if (min > (playerRigidbody.position.x - goal.position.x) * (playerRigidbody.position.x - goal.position.x) + (playerRigidbody.position.z - goal.position.z) * (playerRigidbody.position.z - goal.position.z))
+                {
 
+                    min = (playerRigidbody.position.x - goal.position.x) * (playerRigidbody.position.x - goal.position.x) + (playerRigidbody.position.z - goal.position.z) * (playerRigidbody.position.z - goal.position.z);
+                    minPos = playerRigidbody.position;
+                }
+                if (flag)
+                {
+                    perpendicularToXZPlane = new Vector3(-contactNormal.z - contactNormal.x, 0.0f, contactNormal.x - contactNormal.z);
+                    playerRigidbody.rotation = Quaternion.LookRotation(con.point);
+                    force = perpendicularToXZPlane.normalized * 3f * speed;
+                    playerRigidbody.velocity = force;
+                }
 
+                start();
+                comeback();
+                go();
             }
         }
+
+        if(!isMoving && !EnterFlag)
+        {
+            isMoving = true;
+        }
     }
+
+    void start()
+    {
+        if(!StartFlag && 1f < (initPos.x - playerRigidbody.position.x) * (initPos.x - playerRigidbody.position.x) + (initPos.z - playerRigidbody.position.z) * (initPos.z - playerRigidbody.position.z))
+        {
+            StartFlag = true;
+            Debug.Log("Start");
+        }
+    }
+
+    void comeback()
+    {
+        if (!ComeBackFlag && StartFlag && 0.1f > (initPos.x - playerRigidbody.position.x) * (initPos.x - playerRigidbody.position.x) + (initPos.z - playerRigidbody.position.z) * (initPos.z - playerRigidbody.position.z))
+        {
+            ComeBackFlag = true;
+            Debug.Log("Comeback");
+        }
+    }
+
+    void go()
+    {
+       if (ComeBackFlag && 0.01f > (minPos.x - playerRigidbody.position.x) * (minPos.x - playerRigidbody.position.x) + (minPos.z - playerRigidbody.position.z) * (minPos.z - playerRigidbody.position.z))
+        {
+            Debug.Log("Go");
+            EnterFlag = false;
+            isMoving = true;
+            StartFlag = false;
+            ComeBackFlag = false;
+            flag = false;
+            initPos = new Vector3(100f, 100f, 100f);
+            min = 10000f;
+        }
+    }
+
 
     void OnCollisionEnter(Collision collision)
     {
         if (collision.gameObject.tag == "Wall")
         {
-            Debug.Log("ttt");
-            isMoving = false;
+            if(isMoving == true)
+            {
+                initPos = playerRigidbody.position;
+                EnterFlag = true;
+            }
+            count++;
+
+            flag = false;
+            if (ComeBackFlag != false)
+            {
+                isMoving = false;
+            }
             foreach (ContactPoint contact in collision.contacts)
             {
+                con = contact;
                 contactNormal = contact.normal; // 법선 벡터
 
                 // 이동할 거리를 결정합니다.
@@ -95,21 +149,49 @@ public class PlayerController : MonoBehaviour
                 perpendicularToXZPlane = new Vector3(-contactNormal.z, 0.0f, contactNormal.x);
                 playerRigidbody.rotation = Quaternion.LookRotation(-contactNormal);
                 // 오브젝트를 새로운 위치로 이동시킵니다.
-                force = perpendicularToXZPlane.normalized * 3f; 
+                force = perpendicularToXZPlane.normalized * 3f * speed;
 
                 playerRigidbody.velocity = force;
             }
 
         }
     }
+
+    void OnCollisionStay(Collision collision)
+    {
+        if (collision.gameObject.tag == "Wall")
+        {
+            flag = false;
+            isMoving = false;
+            foreach (ContactPoint contact in collision.contacts)
+            {
+                con = contact;
+                contactNormal = contact.normal; // 법선 벡터
+
+                // 이동할 거리를 결정합니다.
+
+                perpendicularToXZPlane = new Vector3(-contactNormal.z, 0.0f, contactNormal.x);
+                playerRigidbody.rotation = Quaternion.LookRotation(-contactNormal);
+                // 오브젝트를 새로운 위치로 이동시킵니다.
+                force = perpendicularToXZPlane.normalized * 3f * speed; 
+
+                playerRigidbody.velocity = force;
+            }
+
+        }
+    }
+
+
     void OnCollisionExit(Collision collision)
     {
         if (collision.gameObject.tag == "Wall")
         {
-            Debug.Log("aaa");
-            playerRigidbody.velocity = Vector3.zero;
-
-
+            count--;
+            if (count == 0)
+            {
+                playerRigidbody.velocity = Vector3.zero;
+                flag = true;
+            }
         }
     }
 }
