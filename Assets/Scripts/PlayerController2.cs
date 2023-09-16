@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using static UnityEngine.GraphicsBuffer;
 
-public class PlayerController : MonoBehaviour
+public class PlayerController2 : MonoBehaviour
 {
     public Transform goal; // Goal 객체의 Transform 컴포넌트를 할당합니다.
     public float moveSpeed = 5f; // 이동 속도를 조절합니다.
@@ -11,6 +11,7 @@ public class PlayerController : MonoBehaviour
     private bool isMoving = true; // 이동 상태를 나타내는 플래그 변수입니다.
     private float initialY; // 초기 y 위치를 저장할 변수입니다.
     private Rigidbody playerRigidbody;
+    private Vector3 StartingPoint;
 
     private ContactPoint con;
     private bool flag = false;
@@ -18,8 +19,9 @@ public class PlayerController : MonoBehaviour
     private bool StartFlag = false;
     private bool ComeBackFlag = false;
     private bool EnterFlag = false;
+    private bool LineFlag = false;
 
-    public float speed =1f;
+    public float speed = 1f;
 
     Vector3 contactNormal;
     Vector3 perpendicularToXZPlane;
@@ -35,7 +37,7 @@ public class PlayerController : MonoBehaviour
         // 초기 y 위치를 저장합니다.
         initialY = transform.position.y;
         playerRigidbody = GetComponent<Rigidbody>();
-
+        StartingPoint = playerRigidbody.transform.position;
     }
 
     private void FixedUpdate()
@@ -44,15 +46,10 @@ public class PlayerController : MonoBehaviour
         {
             if (goal != null)
             {
-                // Goal 객체 방향을 향해 회전합니다.
                 Vector3 direction = (goal.position - transform.position).normalized * 1.5f * speed;
-                Quaternion rotation = Quaternion.LookRotation(direction);
-                transform.rotation = rotation;
-
-                // y 위치를 초기값으로 유지합니다.
-                Vector3 newPosition = transform.position;
-                newPosition.y = initialY;
+                playerRigidbody.rotation = Quaternion.LookRotation(goal.position);
                 playerRigidbody.velocity = new Vector3(direction.x, 0, direction.z);
+                print("gogogo");
             }
             else
             {
@@ -61,30 +58,45 @@ public class PlayerController : MonoBehaviour
         }
         else
         {
-
-            if (EnterFlag)
+            if (line())
             {
-                if (min > (playerRigidbody.position.x - goal.position.x) * (playerRigidbody.position.x - goal.position.x) + (playerRigidbody.position.z - goal.position.z) * (playerRigidbody.position.z - goal.position.z))
+                playerRigidbody.velocity = Vector3.zero;
+                endFlag = false;
+                EnterFlag = false;
+                isMoving = true;
+                StartFlag = false;
+                ComeBackFlag = false;
+                flag = false;
+                initPos = new Vector3(100f, 100f, 100f);
+                min = 10000f;
+                Invoke("lineend", 0.1f);
+            }
+            else
+            {
+                if (EnterFlag)
                 {
+                    if (min > (playerRigidbody.position.x - goal.position.x) * (playerRigidbody.position.x - goal.position.x) + (playerRigidbody.position.z - goal.position.z) * (playerRigidbody.position.z - goal.position.z))
+                    {
 
-                    min = (playerRigidbody.position.x - goal.position.x) * (playerRigidbody.position.x - goal.position.x) + (playerRigidbody.position.z - goal.position.z) * (playerRigidbody.position.z - goal.position.z);
-                    minPos = playerRigidbody.position;
-                }
-                if (flag)
-                {
-                    perpendicularToXZPlane = new Vector3(-contactNormal.z - contactNormal.x, 0.0f, contactNormal.x - contactNormal.z);
-                    playerRigidbody.rotation = Quaternion.LookRotation(con.point);
-                    force = perpendicularToXZPlane.normalized * 1f * speed;
-                    playerRigidbody.velocity = force;
-                }
+                        min = (playerRigidbody.position.x - goal.position.x) * (playerRigidbody.position.x - goal.position.x) + (playerRigidbody.position.z - goal.position.z) * (playerRigidbody.position.z - goal.position.z);
+                        minPos = playerRigidbody.position;
+                    }
+                    if (flag)
+                    {
+                        perpendicularToXZPlane = new Vector3(-contactNormal.z - contactNormal.x, 0.0f, contactNormal.x - contactNormal.z);
+                        playerRigidbody.rotation = Quaternion.LookRotation(con.point);
+                        force = perpendicularToXZPlane.normalized * 1.5f * speed;
+                        playerRigidbody.velocity = force;
+                    }
 
-                start();
-                comeback();
-                go();
+                    start();
+                    comeback();
+                    go();
+                }
             }
         }
 
-        if(!isMoving && !EnterFlag)
+        if (!isMoving && !EnterFlag)
         {
             isMoving = true;
         }
@@ -92,11 +104,42 @@ public class PlayerController : MonoBehaviour
 
     void start()
     {
-        if(!StartFlag && 1f < (initPos.x - playerRigidbody.position.x) * (initPos.x - playerRigidbody.position.x) + (initPos.z - playerRigidbody.position.z) * (initPos.z - playerRigidbody.position.z))
+        if (!StartFlag && 1f < (initPos.x - playerRigidbody.position.x) * (initPos.x - playerRigidbody.position.x) + (initPos.z - playerRigidbody.position.z) * (initPos.z - playerRigidbody.position.z))
         {
             StartFlag = true;
             Debug.Log("Start");
         }
+    }
+
+    bool line()
+    {
+        //print(Mathf.Abs((goal.position.y - StartingPoint.y) / (goal.position.x - StartingPoint.x) - (goal.position.y - playerRigidbody.position.y) / (goal.position.x - playerRigidbody.position.x)));
+        if (!isMoving && Mathf.Abs((goal.position.y - StartingPoint.y) / (goal.position.x - StartingPoint.x) - (goal.position.y - playerRigidbody.position.y) / (goal.position.x - playerRigidbody.position.x)) < 0.02f)
+        {
+            Ray ray = new Ray(playerRigidbody.position, goal.position);
+            RaycastHit hitData;
+
+
+            if (Physics.Raycast(ray, out hitData))
+            {
+                print(hitData.distance);
+                if (hitData.distance > 1f)
+                {
+                    Debug.Log("line go");
+                    LineFlag = true;
+                    //lineend();
+                }
+            }
+        }
+        return LineFlag;
+    }
+
+    void lineend()
+    {
+        Debug.Log("lineend");
+        Debug.Log(LineFlag);
+        LineFlag = false;
+        endFlag = true;
     }
 
     void comeback()
@@ -110,7 +153,7 @@ public class PlayerController : MonoBehaviour
 
     void go()
     {
-       if (ComeBackFlag && 0.01f > (minPos.x - playerRigidbody.position.x) * (minPos.x - playerRigidbody.position.x) + (minPos.z - playerRigidbody.position.z) * (minPos.z - playerRigidbody.position.z))
+        if (ComeBackFlag && 0.01f > (minPos.x - playerRigidbody.position.x) * (minPos.x - playerRigidbody.position.x) + (minPos.z - playerRigidbody.position.z) * (minPos.z - playerRigidbody.position.z))
         {
             Debug.Log("Go");
             endFlag = false;
@@ -136,10 +179,11 @@ public class PlayerController : MonoBehaviour
     {
         if (collision.gameObject.tag == "Wall" && endFlag)
         {
-            if(isMoving == true)
+            if (isMoving == true)
             {
                 initPos = playerRigidbody.position;
                 EnterFlag = true;
+                //Invoke("lineend", 0.1f);
             }
             count++;
 
@@ -182,9 +226,11 @@ public class PlayerController : MonoBehaviour
                 perpendicularToXZPlane = new Vector3(-contactNormal.z, 0.0f, contactNormal.x);
                 playerRigidbody.rotation = Quaternion.LookRotation(-contactNormal);
                 // 오브젝트를 새로운 위치로 이동시킵니다.
-                force = perpendicularToXZPlane.normalized * 3.0f * speed; 
+                force = perpendicularToXZPlane.normalized * 3.0f * speed;
 
                 playerRigidbody.velocity = force;
+
+                
             }
 
         }
