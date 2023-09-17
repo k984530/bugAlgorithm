@@ -1,6 +1,5 @@
 using UnityEngine;
-using UnityEngine.UIElements;
-using static UnityEngine.GraphicsBuffer;
+
 
 public class PlayerController2 : MonoBehaviour
 {
@@ -9,17 +8,17 @@ public class PlayerController2 : MonoBehaviour
     public float rotationSpeed = 45f; // 이동 각도 조절 가능
 
     private bool isMoving = true; // 이동 상태를 나타내는 플래그 변수입니다.
-    private float initialY; // 초기 y 위치를 저장할 변수입니다.
+    public Transform startpoint;
     private Rigidbody playerRigidbody;
-    private Vector3 StartingPoint;
+
 
     private ContactPoint con;
     private bool flag = false;
     private bool endFlag = true;
-    private bool StartFlag = false;
     private bool ComeBackFlag = false;
     private bool EnterFlag = false;
-    private bool LineFlag = false;
+    private bool lineFlag = false;
+
 
     public float speed = 1f;
 
@@ -34,10 +33,7 @@ public class PlayerController2 : MonoBehaviour
 
     private void Start()
     {
-        // 초기 y 위치를 저장합니다.
-        initialY = transform.position.y;
         playerRigidbody = GetComponent<Rigidbody>();
-        StartingPoint = playerRigidbody.transform.position;
     }
 
     private void FixedUpdate()
@@ -49,7 +45,6 @@ public class PlayerController2 : MonoBehaviour
                 Vector3 direction = (goal.position - transform.position).normalized * 1.5f * speed;
                 playerRigidbody.rotation = Quaternion.LookRotation(goal.position);
                 playerRigidbody.velocity = new Vector3(direction.x, 0, direction.z);
-                print("gogogo");
             }
             else
             {
@@ -58,120 +53,29 @@ public class PlayerController2 : MonoBehaviour
         }
         else
         {
-            if (line())
+            if (lineFlag && getDistancePointAndLine(startpoint.position, goal.position, transform.position) < 0.3)
             {
-                playerRigidbody.velocity = Vector3.zero;
-                endFlag = false;
-                EnterFlag = false;
                 isMoving = true;
-                StartFlag = false;
-                ComeBackFlag = false;
-                flag = false;
-                initPos = new Vector3(100f, 100f, 100f);
-                min = 10000f;
-                Invoke("lineend", 0.1f);
+                lineFlag = false;
             }
             else
             {
-                if (EnterFlag)
+
+                if (min > (playerRigidbody.position.x - goal.position.x) * (playerRigidbody.position.x - goal.position.x) + (playerRigidbody.position.z - goal.position.z) * (playerRigidbody.position.z - goal.position.z))
                 {
-                    if (min > (playerRigidbody.position.x - goal.position.x) * (playerRigidbody.position.x - goal.position.x) + (playerRigidbody.position.z - goal.position.z) * (playerRigidbody.position.z - goal.position.z))
-                    {
 
-                        min = (playerRigidbody.position.x - goal.position.x) * (playerRigidbody.position.x - goal.position.x) + (playerRigidbody.position.z - goal.position.z) * (playerRigidbody.position.z - goal.position.z);
-                        minPos = playerRigidbody.position;
-                    }
-                    if (flag)
-                    {
-                        perpendicularToXZPlane = new Vector3(-contactNormal.z - contactNormal.x, 0.0f, contactNormal.x - contactNormal.z);
-                        playerRigidbody.rotation = Quaternion.LookRotation(con.point);
-                        force = perpendicularToXZPlane.normalized * 1.5f * speed;
-                        playerRigidbody.velocity = force;
-                    }
-
-                    start();
-                    comeback();
-                    go();
+                    min = (playerRigidbody.position.x - goal.position.x) * (playerRigidbody.position.x - goal.position.x) + (playerRigidbody.position.z - goal.position.z) * (playerRigidbody.position.z - goal.position.z);
+                    minPos = playerRigidbody.position;
+                }
+                if (flag)
+                {
+                    perpendicularToXZPlane = new Vector3(-contactNormal.z - contactNormal.x, 0.0f, contactNormal.x - contactNormal.z);
+                    playerRigidbody.rotation = Quaternion.LookRotation(con.point);
+                    force = perpendicularToXZPlane.normalized * 1.5f * speed;
+                    playerRigidbody.velocity = force;
                 }
             }
         }
-
-        if (!isMoving && !EnterFlag)
-        {
-            isMoving = true;
-        }
-    }
-
-    void start()
-    {
-        if (!StartFlag && 1f < (initPos.x - playerRigidbody.position.x) * (initPos.x - playerRigidbody.position.x) + (initPos.z - playerRigidbody.position.z) * (initPos.z - playerRigidbody.position.z))
-        {
-            StartFlag = true;
-            Debug.Log("Start");
-        }
-    }
-
-    bool line()
-    {
-        //print(Mathf.Abs((goal.position.y - StartingPoint.y) / (goal.position.x - StartingPoint.x) - (goal.position.y - playerRigidbody.position.y) / (goal.position.x - playerRigidbody.position.x)));
-        if (!isMoving && Mathf.Abs((goal.position.y - StartingPoint.y) / (goal.position.x - StartingPoint.x) - (goal.position.y - playerRigidbody.position.y) / (goal.position.x - playerRigidbody.position.x)) < 0.02f)
-        {
-            Ray ray = new Ray(playerRigidbody.position, goal.position);
-            RaycastHit hitData;
-
-
-            if (Physics.Raycast(ray, out hitData))
-            {
-                print(hitData.distance);
-                if (hitData.distance > 1f)
-                {
-                    Debug.Log("line go");
-                    LineFlag = true;
-                    //lineend();
-                }
-            }
-        }
-        return LineFlag;
-    }
-
-    void lineend()
-    {
-        Debug.Log("lineend");
-        Debug.Log(LineFlag);
-        LineFlag = false;
-        endFlag = true;
-    }
-
-    void comeback()
-    {
-        if (!ComeBackFlag && StartFlag && 0.1f > (initPos.x - playerRigidbody.position.x) * (initPos.x - playerRigidbody.position.x) + (initPos.z - playerRigidbody.position.z) * (initPos.z - playerRigidbody.position.z))
-        {
-            ComeBackFlag = true;
-            Debug.Log("Comeback");
-        }
-    }
-
-    void go()
-    {
-        if (ComeBackFlag && 0.01f > (minPos.x - playerRigidbody.position.x) * (minPos.x - playerRigidbody.position.x) + (minPos.z - playerRigidbody.position.z) * (minPos.z - playerRigidbody.position.z))
-        {
-            Debug.Log("Go");
-            endFlag = false;
-            EnterFlag = false;
-            isMoving = true;
-            StartFlag = false;
-            ComeBackFlag = false;
-            flag = false;
-            initPos = new Vector3(100f, 100f, 100f);
-            min = 10000f;
-            Invoke("end", 0.1f);
-        }
-    }
-
-    void end()
-    {
-        Debug.Log("end");
-        endFlag = true;
     }
 
 
@@ -182,16 +86,13 @@ public class PlayerController2 : MonoBehaviour
             if (isMoving == true)
             {
                 initPos = playerRigidbody.position;
+                isMoving = false;
                 EnterFlag = true;
-                //Invoke("lineend", 0.1f);
+                Invoke("enterCol", 0.2f);
             }
             count++;
 
             flag = false;
-            if (ComeBackFlag != false)
-            {
-                isMoving = false;
-            }
             foreach (ContactPoint contact in collision.contacts)
             {
                 con = contact;
@@ -209,13 +110,21 @@ public class PlayerController2 : MonoBehaviour
 
         }
     }
+    float getDistancePointAndLine(Vector3 A, Vector3 B, Vector3 point)
+    {
+        Vector3 AB = B - A;
+        return (Vector3.Cross(point - A, AB)).magnitude / AB.magnitude;
+    }
+    void enterCol()
+    {
+        lineFlag = true;
+    }
 
     void OnCollisionStay(Collision collision)
     {
         if (collision.gameObject.tag == "Wall" && endFlag)
         {
             flag = false;
-            isMoving = false;
             foreach (ContactPoint contact in collision.contacts)
             {
                 con = contact;

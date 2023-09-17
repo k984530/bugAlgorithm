@@ -4,6 +4,7 @@ using static UnityEngine.GraphicsBuffer;
 
 public class PlayerController : MonoBehaviour
 {
+    public Transform startpoint;
     public Transform goal; // Goal 객체의 Transform 컴포넌트를 할당합니다.
     public float moveSpeed = 5f; // 이동 속도를 조절합니다.
     public float rotationSpeed = 45f; // 이동 각도 조절 가능
@@ -40,6 +41,7 @@ public class PlayerController : MonoBehaviour
 
     private void FixedUpdate()
     {
+        
         if (isMoving)
         {
             if (goal != null)
@@ -125,15 +127,20 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+
     void end()
     {
         Debug.Log("end");
         endFlag = true;
     }
-
+    private void OnTriggerEnter(Collider other)
+    {
+        print(other.gameObject);
+    }
 
     void OnCollisionEnter(Collision collision)
     {
+        print(collision.gameObject);
         if (collision.gameObject.tag == "Wall" && endFlag)
         {
             if(isMoving == true)
