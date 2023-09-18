@@ -6,8 +6,6 @@ public class PlayerController : MonoBehaviour
 {
     public Transform startpoint;
     public Transform goal; // Goal 객체의 Transform 컴포넌트를 할당합니다.
-    public float moveSpeed = 5f; // 이동 속도를 조절합니다.
-    public float rotationSpeed = 45f; // 이동 각도 조절 가능
 
     private bool isMoving = true; // 이동 상태를 나타내는 플래그 변수입니다.
     private float initialY; // 초기 y 위치를 저장할 변수입니다.
@@ -37,6 +35,17 @@ public class PlayerController : MonoBehaviour
         initialY = transform.position.y;
         playerRigidbody = GetComponent<Rigidbody>();
 
+    }
+
+    public void OnEnable()
+    {
+        playerRigidbody.velocity = Vector3.zero;
+        isMoving = true;
+        flag = false;
+        endFlag = true;
+        ComeBackFlag = false;
+        EnterFlag = false;
+        count = 0;
     }
 
     private void FixedUpdate()
@@ -76,7 +85,7 @@ public class PlayerController : MonoBehaviour
                 {
                     perpendicularToXZPlane = new Vector3(-contactNormal.z - contactNormal.x, 0.0f, contactNormal.x - contactNormal.z);
                     playerRigidbody.rotation = Quaternion.LookRotation(con.point);
-                    force = perpendicularToXZPlane.normalized * 1f * speed;
+                    force = perpendicularToXZPlane.normalized * 1.5f * speed;
                     playerRigidbody.velocity = force;
                 }
 
@@ -133,10 +142,6 @@ public class PlayerController : MonoBehaviour
         Debug.Log("end");
         endFlag = true;
     }
-    private void OnTriggerEnter(Collider other)
-    {
-        print(other.gameObject);
-    }
 
     void OnCollisionEnter(Collision collision)
     {
@@ -165,7 +170,7 @@ public class PlayerController : MonoBehaviour
                 perpendicularToXZPlane = new Vector3(-contactNormal.z, 0.0f, contactNormal.x);
                 playerRigidbody.rotation = Quaternion.LookRotation(-contactNormal);
                 // 오브젝트를 새로운 위치로 이동시킵니다.
-                force = perpendicularToXZPlane.normalized * 3f * speed;
+                force = perpendicularToXZPlane.normalized * 2.0f * speed;
 
                 playerRigidbody.velocity = force;
             }
@@ -189,7 +194,7 @@ public class PlayerController : MonoBehaviour
                 perpendicularToXZPlane = new Vector3(-contactNormal.z, 0.0f, contactNormal.x);
                 playerRigidbody.rotation = Quaternion.LookRotation(-contactNormal);
                 // 오브젝트를 새로운 위치로 이동시킵니다.
-                force = perpendicularToXZPlane.normalized * 3.0f * speed; 
+                force = perpendicularToXZPlane.normalized * 2.0f * speed;
 
                 playerRigidbody.velocity = force;
             }

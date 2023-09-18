@@ -4,8 +4,6 @@ using UnityEngine;
 public class PlayerController2 : MonoBehaviour
 {
     public Transform goal; // Goal 객체의 Transform 컴포넌트를 할당합니다.
-    public float moveSpeed = 5f; // 이동 속도를 조절합니다.
-    public float rotationSpeed = 45f; // 이동 각도 조절 가능
 
     private bool isMoving = true; // 이동 상태를 나타내는 플래그 변수입니다.
     public Transform startpoint;
@@ -36,6 +34,18 @@ public class PlayerController2 : MonoBehaviour
         playerRigidbody = GetComponent<Rigidbody>();
     }
 
+    public void OnEnable()
+    {
+        playerRigidbody.velocity = Vector3.zero;
+        isMoving = true;
+        flag = false;
+        endFlag = true;
+        ComeBackFlag = false;
+        EnterFlag = false;
+        lineFlag = false;
+        count = 0;
+    }   
+
     private void FixedUpdate()
     {
         if (isMoving)
@@ -53,7 +63,7 @@ public class PlayerController2 : MonoBehaviour
         }
         else
         {
-            if (lineFlag && getDistancePointAndLine(startpoint.position, goal.position, transform.position) < 0.3)
+            if (lineFlag && getDistancePointAndLine(startpoint.position, goal.position, transform.position) < 0.35)
             {
                 isMoving = true;
                 lineFlag = false;
