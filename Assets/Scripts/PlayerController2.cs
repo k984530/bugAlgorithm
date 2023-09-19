@@ -34,6 +34,7 @@ public class PlayerController2 : MonoBehaviour
         playerRigidbody = GetComponent<Rigidbody>();
     }
 
+    //업데이트 예정 Bug 1과 구분하기 위함 
     public void OnEnable()
     {
         playerRigidbody.velocity = Vector3.zero;
@@ -63,7 +64,7 @@ public class PlayerController2 : MonoBehaviour
         }
         else
         {
-            if (lineFlag && getDistancePointAndLine(startpoint.position, goal.position, transform.position) < 0.35)
+            if (lineFlag && getDistancePointAndLine(startpoint.position, goal.position, transform.position) < 0.30)
             {
                 isMoving = true;
                 lineFlag = false;
@@ -72,12 +73,12 @@ public class PlayerController2 : MonoBehaviour
             {
 
                 if (min > (playerRigidbody.position.x - goal.position.x) * (playerRigidbody.position.x - goal.position.x) + (playerRigidbody.position.z - goal.position.z) * (playerRigidbody.position.z - goal.position.z))
-                {
+                { // 그냥 벽을 짚고 가는 경우 
 
                     min = (playerRigidbody.position.x - goal.position.x) * (playerRigidbody.position.x - goal.position.x) + (playerRigidbody.position.z - goal.position.z) * (playerRigidbody.position.z - goal.position.z);
                     minPos = playerRigidbody.position;
                 }
-                if (flag)
+                if (flag) // 장애물의 꼭짓점을 만난 경우 
                 {
                     perpendicularToXZPlane = new Vector3(-contactNormal.z - contactNormal.x, 0.0f, contactNormal.x - contactNormal.z);
                     playerRigidbody.rotation = Quaternion.LookRotation(con.point);
@@ -89,6 +90,7 @@ public class PlayerController2 : MonoBehaviour
     }
 
 
+    //장애물 인식
     void OnCollisionEnter(Collision collision)
     {
         if (collision.gameObject.tag == "Wall" && endFlag)
@@ -120,16 +122,19 @@ public class PlayerController2 : MonoBehaviour
 
         }
     }
+    // 스타트지점과 목표지점을 이은 선과의 거리를 추적함 
     float getDistancePointAndLine(Vector3 A, Vector3 B, Vector3 point)
     {
         Vector3 AB = B - A;
         return (Vector3.Cross(point - A, AB)).magnitude / AB.magnitude;
     }
+    // 선을 만남
     void enterCol()
     {
         lineFlag = true;
     }
 
+    // 벽을 짚고 감
     void OnCollisionStay(Collision collision)
     {
         if (collision.gameObject.tag == "Wall" && endFlag)
@@ -155,7 +160,7 @@ public class PlayerController2 : MonoBehaviour
         }
     }
 
-
+    // 꼭짓점을 만난경우.
     void OnCollisionExit(Collision collision)
     {
         if (collision.gameObject.tag == "Wall")

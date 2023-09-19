@@ -31,8 +31,6 @@ public class PlayerController : MonoBehaviour
 
     private void Start()
     {
-        // 초기 y 위치를 저장합니다.
-        initialY = transform.position.y;
         playerRigidbody = GetComponent<Rigidbody>();
 
     }
@@ -60,9 +58,6 @@ public class PlayerController : MonoBehaviour
                 Quaternion rotation = Quaternion.LookRotation(direction);
                 transform.rotation = rotation;
 
-                // y 위치를 초기값으로 유지합니다.
-                Vector3 newPosition = transform.position;
-                newPosition.y = initialY;
                 playerRigidbody.velocity = new Vector3(direction.x, 0, direction.z);
             }
             else
@@ -100,7 +95,8 @@ public class PlayerController : MonoBehaviour
             isMoving = true;
         }
     }
-
+    
+    //장애물을 만남
     void start()
     {
         if(!StartFlag && 1f < (initPos.x - playerRigidbody.position.x) * (initPos.x - playerRigidbody.position.x) + (initPos.z - playerRigidbody.position.z) * (initPos.z - playerRigidbody.position.z))
@@ -109,7 +105,8 @@ public class PlayerController : MonoBehaviour
             Debug.Log("Start");
         }
     }
-
+    
+    //장애물을 만나고 한 바퀴 둘러봄
     void comeback()
     {
         if (!ComeBackFlag && StartFlag && 0.1f > (initPos.x - playerRigidbody.position.x) * (initPos.x - playerRigidbody.position.x) + (initPos.z - playerRigidbody.position.z) * (initPos.z - playerRigidbody.position.z))
@@ -119,6 +116,7 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    // 목적지와 가장 가까운 지점에서 탈출함
     void go()
     {
        if (ComeBackFlag && 0.01f > (minPos.x - playerRigidbody.position.x) * (minPos.x - playerRigidbody.position.x) + (minPos.z - playerRigidbody.position.z) * (minPos.z - playerRigidbody.position.z))
@@ -136,13 +134,14 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-
+    // 장애물에서 떠나고 떠난 장애물을 인식하지 않기 위함
     void end()
     {
         Debug.Log("end");
         endFlag = true;
     }
 
+    // 장애물을 만났을 때 실행
     void OnCollisionEnter(Collision collision)
     {
         print(collision.gameObject);
@@ -178,6 +177,7 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    // 장애물을 만나고 있는 /
     void OnCollisionStay(Collision collision)
     {
         if (collision.gameObject.tag == "Wall" && endFlag)
@@ -202,7 +202,7 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-
+    // 장애물을 돌다가 벽을 못 짚은 경우
     void OnCollisionExit(Collision collision)
     {
         if (collision.gameObject.tag == "Wall")
