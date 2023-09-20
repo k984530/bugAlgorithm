@@ -35,17 +35,17 @@ public class PlayerController2 : MonoBehaviour
     }
 
     //업데이트 예정 Bug 1과 구분하기 위함 
-    public void OnEnable()
-    {
-        playerRigidbody.velocity = Vector3.zero;
-        isMoving = true;
-        flag = false;
-        endFlag = true;
-        ComeBackFlag = false;
-        EnterFlag = false;
-        lineFlag = false;
-        count = 0;
-    }   
+    //public void OnEnable()
+    //{
+    //    playerRigidbody.velocity = Vector3.zero;
+    //    isMoving = true;
+    //    flag = false;
+    //    endFlag = true;
+    //    ComeBackFlag = false;
+    //    EnterFlag = false;
+    //    lineFlag = false;
+    //    count = 0;
+    //}   
 
     private void FixedUpdate()
     {
