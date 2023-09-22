@@ -11,6 +11,7 @@ public class Tangent : MonoBehaviour
     private Rigidbody playerRigidbody;
     private float minDistance;
     private int minIndex;
+    private Vector3 minPoint;
     public float rayDis;
 
     private void Start()
@@ -36,39 +37,33 @@ public class Tangent : MonoBehaviour
                 if (hits[i - 1].point == Vector3.zero)
                 {
                     Rs.Add(hits[i]);
-                } else if(hits[i + 1].point == Vector3.zero){
+                } else if (hits[i + 1].point == Vector3.zero){
                     Rs.Add(hits[i]);
                 }
             }
         }
 
+        foreach(RaycastHit h in Rs)
+        {
+            if (Vector3.Distance(h.point, goal.transform.position) < minDistance)
+            {
+                minDistance = Vector3.Distance(h.point, goal.transform.position);
+                minPoint = h.point;
+            }
+        }
 
-        if (hit.distance > 0.1f)
+        if(Vector3.Distance(transform.position, goal.transform.position) - 0.5f < minDistance)
         {
-            if (Vector3.Distance(transform.position, goal.transform.position) - hit.distance < minDistance)
-            {
-                minIndex = 360;
-            }
-        } else
-        {
-            if (Vector3.Distance(transform.position, goal.transform.position) - rayDis < minDistance)
-            {
-                minIndex = 360;
-            }
+            minDistance = Vector3.Distance(transform.position, goal.transform.position) - 0.5f;
+            minPoint = goal.transform.position - transform.position;
         }
     }
 
     void normalGo()
     {
         shootRay();
-        if(minIndex == 360)
-        {
-            playerRigidbody.velocity = (goal.transform.position - transform.position).normalized * 3f;
-        }
-        else
-        {
-            playerRigidbody.velocity = new Vector3(Mathf.Cos(minIndex * Mathf.Deg2Rad), 0f, Mathf.Sin(minIndex * Mathf.Deg2Rad)).normalized * 3f;
-        }
+        Debug.Log(minPoint.normalized);
+        playerRigidbody.velocity = minPoint.normalized * 3f;
     }
 
     void debugRay() {
@@ -76,8 +71,7 @@ public class Tangent : MonoBehaviour
         Debug.DrawRay(transform.position, new Vector3(Mathf.Cos(minIndex * Mathf.Deg2Rad), 0f, Mathf.Sin(minIndex * Mathf.Deg2Rad)) * rayDis, Color.green, 0f, true);
         foreach (RaycastHit h in Rs) {
             Debug.DrawRay(transform.position,h.point - transform.position,Color.blue,0f);
-                }
-
+         }
     }
     private void FixedUpdate()
     {
