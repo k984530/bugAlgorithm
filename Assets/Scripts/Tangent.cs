@@ -12,6 +12,7 @@ public class Tangent : MonoBehaviour
     private float minDistance;
     private int minIndex;
     private Vector3 minPoint;
+    private Vector3 epsilon;
     public float rayDis;
 
     private void Start()
@@ -22,8 +23,11 @@ public class Tangent : MonoBehaviour
     void shootRay()
     {
         Rs.Clear();
+        epsilon = Vector3.zero;
+
         hits = new RaycastHit[360];
         minDistance = 1000f;
+
         for (int i = 0; i < 360; i++)
         {
             Physics.Raycast(transform.position, new Vector3(Mathf.Cos(i * Mathf.Deg2Rad), 0f, Mathf.Sin(i * Mathf.Deg2Rad) ) , out hits[i], rayDis);
@@ -37,7 +41,7 @@ public class Tangent : MonoBehaviour
                 if (hits[i - 1].point == Vector3.zero)
                 {
                     Rs.Add(hits[i]);
-                } else if (hits[i + 1].point == Vector3.zero){
+                } else if (hits[i + 1].point == Vector3.zero) {
                     Rs.Add(hits[i]);
                 }
             }
@@ -48,7 +52,7 @@ public class Tangent : MonoBehaviour
             if (Vector3.Distance(h.point, goal.transform.position) < minDistance)
             {
                 minDistance = Vector3.Distance(h.point, goal.transform.position);
-                minPoint = h.point;
+                minPoint = h.point - transform.position;
             }
         }
 
@@ -62,7 +66,6 @@ public class Tangent : MonoBehaviour
     void normalGo()
     {
         shootRay();
-        Debug.Log(minPoint.normalized);
         playerRigidbody.velocity = minPoint.normalized * 3f;
     }
 
